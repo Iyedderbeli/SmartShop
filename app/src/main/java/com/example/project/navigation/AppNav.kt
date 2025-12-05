@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.project.auth.LoginScreen
 import com.example.project.auth.LoginViewModel
+import com.example.project.products.ProductScreen
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
@@ -27,7 +28,7 @@ fun AppNav() {
         }
 
         composable("home") {
-            Text("Welcome!")
+            ProductScreen()
         }
     }
 }
