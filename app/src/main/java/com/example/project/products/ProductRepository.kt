@@ -29,6 +29,14 @@ class ProductRepository(
         )
     }
 
+    suspend fun updateProduct(product: ProductEntity) {
+        require(product.name.isNotBlank()) { "Name cannot be empty" }
+        require(product.price > 0) { "Price must be > 0" }
+        require(product.quantity >= 0) { "Quantity must be ≥ 0" }
+
+        dao.updateProduct(product)
+    }
+
     suspend fun deleteProduct(product: ProductEntity) {
         dao.deleteProduct(product)
     }

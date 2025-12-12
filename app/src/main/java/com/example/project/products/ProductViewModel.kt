@@ -16,6 +16,7 @@ data class ProductUiState(
     val quantity: String = "",
     val price: String = "",
     val imageUri: String? = null,
+    val editingId: Int? = null,
     val errorMessage: String? = null,
     val totalProducts: Int = 0,
     val totalStockValue: Double = 0.0
@@ -64,7 +65,33 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         _uiState.update { it.copy(imageUri = uri) }
     }
 
-    fun addProduct() {
+    fun startEdit(product: ProductEntity) {
+        _uiState.update {
+            it.copy(
+                name = product.name,
+                quantity = product.quantity.toString(),
+                price = product.price.toString(),
+                imageUri = product.imageUri,
+                editingId = product.id,
+                errorMessage = null
+            )
+        }
+    }
+
+    fun cancelEdit() {
+        _uiState.update {
+            it.copy(
+                name = "",
+                quantity = "",
+                price = "",
+                imageUri = null,
+                editingId = null,
+                errorMessage = null
+            )
+        }
+    }
+
+    fun saveProduct() {
         val current = _uiState.value
         val name = current.name.trim()
         val quantityInt = current.quantity.toIntOrNull()
@@ -77,16 +104,25 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
 
         viewModelScope.launch {
             try {
-                repository.addProduct(name, quantityInt, priceDouble, current.imageUri)
-                _uiState.update {
-                    it.copy(
-                        name = "",
-                        quantity = "",
-                        price = "",
-                        imageUri = null,
-                        errorMessage = null
+                val id = current.editingId
+
+                if (id == null) {
+                    // Add
+                    repository.addProduct(name, quantityInt, priceDouble, current.imageUri)
+                } else {
+                    // Update
+                    repository.updateProduct(
+                        ProductEntity(
+                            id = id,
+                            name = name,
+                            quantity = quantityInt,
+                            price = priceDouble,
+                            imageUri = current.imageUri
+                        )
                     )
                 }
+
+                cancelEdit()
             } catch (e: IllegalArgumentException) {
                 _uiState.update { it.copy(errorMessage = e.message) }
             }
@@ -94,6 +130,8 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun deleteProduct(product: ProductEntity) {
-        viewModelScope.launch { repository.deleteProduct(product) }
+        viewModelScope.launch {
+            repository.deleteProduct(product)
+        }
     }
 }

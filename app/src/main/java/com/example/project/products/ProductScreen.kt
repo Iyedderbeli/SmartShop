@@ -3,10 +3,12 @@ package com.example.project.products
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,7 +37,10 @@ fun ProductScreen(
             .padding(16.dp)
     ) {
 
-        Text("Add product", style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = if (state.editingId != null) "Edit product" else "Add product",
+            style = MaterialTheme.typography.titleMedium
+        )
         Spacer(Modifier.height(8.dp))
 
         TextField(
@@ -89,11 +94,24 @@ fun ProductScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        Button(
-            onClick = viewModel::addProduct,
-            modifier = Modifier.align(Alignment.End)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Add product")
+            if (state.editingId != null) {
+                TextButton(onClick = { viewModel.cancelEdit() }) {
+                    Text("Cancel")
+                }
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = { viewModel.saveProduct() }) {
+                    Text("Save")
+                }
+            } else {
+                Button(onClick = { viewModel.saveProduct() }) {
+                    Text("Add product")
+                }
+            }
         }
 
         state.errorMessage?.let { msg ->
@@ -119,6 +137,7 @@ fun ProductScreen(
             items(state.products) { product ->
                 ProductItem(
                     product = product,
+                    onEdit = { viewModel.startEdit(product) },
                     onDelete = { viewModel.deleteProduct(product) }
                 )
             }
@@ -129,15 +148,20 @@ fun ProductScreen(
 @Composable
 fun ProductItem(
     product: ProductEntity,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable { onDelete() } // tap to delete (simple)
     ) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
             product.imageUri?.let { uriString ->
                 AsyncImage(
@@ -150,10 +174,17 @@ fun ProductItem(
                 Spacer(Modifier.width(12.dp))
             }
 
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(product.name, style = MaterialTheme.typography.titleMedium)
                 Text("Qty: ${product.quantity}")
                 Text("Price: ${product.price}")
+            }
+
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Filled.Edit, contentDescription = "Edit")
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Filled.Delete, contentDescription = "Delete")
             }
         }
     }
