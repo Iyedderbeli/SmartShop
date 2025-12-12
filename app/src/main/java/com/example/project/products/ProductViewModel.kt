@@ -15,6 +15,7 @@ data class ProductUiState(
     val name: String = "",
     val quantity: String = "",
     val price: String = "",
+    val imageUri: String? = null,
     val errorMessage: String? = null,
     val totalProducts: Int = 0,
     val totalStockValue: Double = 0.0
@@ -47,7 +48,6 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-
     fun onNameChange(value: String) {
         _uiState.update { it.copy(name = value) }
     }
@@ -58,6 +58,10 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
 
     fun onPriceChange(value: String) {
         _uiState.update { it.copy(price = value) }
+    }
+
+    fun onImageSelected(uri: String?) {
+        _uiState.update { it.copy(imageUri = uri) }
     }
 
     fun addProduct() {
@@ -73,12 +77,13 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
 
         viewModelScope.launch {
             try {
-                repository.addProduct(name, quantityInt, priceDouble)
+                repository.addProduct(name, quantityInt, priceDouble, current.imageUri)
                 _uiState.update {
                     it.copy(
                         name = "",
                         quantity = "",
                         price = "",
+                        imageUri = null,
                         errorMessage = null
                     )
                 }
@@ -88,13 +93,7 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun clearError() {
-        _uiState.update { it.copy(errorMessage = null) }
-    }
-
     fun deleteProduct(product: ProductEntity) {
-        viewModelScope.launch {
-            repository.deleteProduct(product)
-        }
+        viewModelScope.launch { repository.deleteProduct(product) }
     }
 }

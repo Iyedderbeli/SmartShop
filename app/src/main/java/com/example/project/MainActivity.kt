@@ -4,8 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.project.navigation.AppNav
 import com.example.project.ui.theme.ProjectTheme
 
@@ -18,13 +16,5 @@ class MainActivity : ComponentActivity() {
                 AppNav()
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AppPreview() {
-    ProjectTheme {
-        AppNav()
     }
 }
