@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -18,12 +19,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.project.data.local.ProductEntity
+import com.example.project.orders.CartViewModel
 
 @Composable
 fun ProductScreen(
+    onGoToCart: () -> Unit,
     viewModel: ProductViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    // Cart ViewModel for adding items to cart
+    val cartVm: CartViewModel = viewModel()
 
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -36,6 +42,23 @@ fun ProductScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
+
+        // 🔥 Header with Cart button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Products",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f)
+            )
+            Button(onClick = onGoToCart) {
+                Text("Cart")
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
 
         Text(
             text = if (state.editingId != null) "Edit product" else "Add product",
@@ -129,8 +152,7 @@ fun ProductScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // List
-        Text("Products", style = MaterialTheme.typography.titleMedium)
+        Text("Product list", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
 
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -138,7 +160,8 @@ fun ProductScreen(
                 ProductItem(
                     product = product,
                     onEdit = { viewModel.startEdit(product) },
-                    onDelete = { viewModel.deleteProduct(product) }
+                    onDelete = { viewModel.deleteProduct(product) },
+                    onAddToCart = { cartVm.addToCart(product) }
                 )
             }
         }
@@ -149,7 +172,8 @@ fun ProductScreen(
 fun ProductItem(
     product: ProductEntity,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onAddToCart: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -180,9 +204,14 @@ fun ProductItem(
                 Text("Price: ${product.price}")
             }
 
+            IconButton(onClick = onAddToCart) {
+                Icon(Icons.Filled.AddShoppingCart, contentDescription = "Add to cart")
+            }
+
             IconButton(onClick = onEdit) {
                 Icon(Icons.Filled.Edit, contentDescription = "Edit")
             }
+
             IconButton(onClick = onDelete) {
                 Icon(Icons.Filled.Delete, contentDescription = "Delete")
             }

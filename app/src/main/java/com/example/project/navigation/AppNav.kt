@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.project.auth.LoginScreen
 import com.example.project.auth.LoginViewModel
+import com.example.project.orders.CartScreen
 import com.example.project.products.ProductScreen
 
 @Composable
@@ -22,8 +23,18 @@ fun AppNav() {
                 onLoginSuccess = { navController.navigate("home") }
             )
         }
+
         composable("home") {
-            ProductScreen()
+            ProductScreen(
+                onGoToCart = { navController.navigate("cart") }
+            )
+        }
+
+        composable("cart") {
+            CartScreen(
+                onBack = { navController.popBackStack() },
+                onCheckoutDone = { navController.navigate("home") }
+            )
         }
     }
 }
