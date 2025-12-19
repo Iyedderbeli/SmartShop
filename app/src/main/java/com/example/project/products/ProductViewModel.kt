@@ -24,62 +24,43 @@ data class ProductUiState(
 
 class ProductViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: ProductRepository
-
-    private val _uiState = MutableStateFlow(ProductUiState())
-    val uiState: StateFlow<ProductUiState> = _uiState
+    private val repo: ProductRepository
+    private val _ui = MutableStateFlow(ProductUiState())
+    val ui: StateFlow<ProductUiState> = _ui
 
     init {
         val db = AppDatabase.getInstance(application)
-        repository = ProductRepository(db.productDao)
+        repo = ProductRepository(db.productDao)
 
         viewModelScope.launch {
-            repository.products.collect { list ->
+            repo.products.collect { list ->
                 val totalProducts = list.size
                 val totalStockValue = list.sumOf { it.quantity * it.price }
-
-                _uiState.update {
-                    it.copy(
-                        products = list,
-                        totalProducts = totalProducts,
-                        totalStockValue = totalStockValue
-                    )
-                }
+                _ui.update { it.copy(products = list, totalProducts = totalProducts, totalStockValue = totalStockValue) }
             }
         }
     }
 
-    fun onNameChange(value: String) {
-        _uiState.update { it.copy(name = value) }
-    }
+    fun onNameChange(v: String) = _ui.update { it.copy(name = v) }
+    fun onQtyChange(v: String) = _ui.update { it.copy(quantity = v) }
+    fun onPriceChange(v: String) = _ui.update { it.copy(price = v) }
+    fun onImageSelected(uri: String?) = _ui.update { it.copy(imageUri = uri) }
 
-    fun onQuantityChange(value: String) {
-        _uiState.update { it.copy(quantity = value) }
-    }
-
-    fun onPriceChange(value: String) {
-        _uiState.update { it.copy(price = value) }
-    }
-
-    fun onImageSelected(uri: String?) {
-        _uiState.update { it.copy(imageUri = uri) }
-    }
-
-    fun startEdit(product: ProductEntity) {
-        _uiState.update {
+    fun startEdit(p: ProductEntity) {
+        _ui.update {
             it.copy(
-                name = product.name,
-                quantity = product.quantity.toString(),
-                price = product.price.toString(),
-                imageUri = product.imageUri,
-                editingId = product.id,
+                name = p.name,
+                quantity = p.quantity.toString(),
+                price = p.price.toString(),
+                imageUri = p.imageUri,
+                editingId = p.id,
                 errorMessage = null
             )
         }
     }
 
     fun cancelEdit() {
-        _uiState.update {
+        _ui.update {
             it.copy(
                 name = "",
                 quantity = "",
@@ -91,47 +72,29 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun saveProduct() {
-        val current = _uiState.value
-        val name = current.name.trim()
-        val quantityInt = current.quantity.toIntOrNull()
-        val priceDouble = current.price.toDoubleOrNull()
+    fun save() {
+        val s = _ui.value
+        val q = s.quantity.toIntOrNull()
+        val pr = s.price.toDoubleOrNull()
 
-        if (quantityInt == null || priceDouble == null) {
-            _uiState.update { it.copy(errorMessage = "Quantity and price must be numbers") }
+        if (q == null || pr == null) {
+            _ui.update { it.copy(errorMessage = "Quantity and price must be numbers") }
             return
         }
 
         viewModelScope.launch {
             try {
-                val id = current.editingId
-
-                if (id == null) {
-                    // Add
-                    repository.addProduct(name, quantityInt, priceDouble, current.imageUri)
-                } else {
-                    // Update
-                    repository.updateProduct(
-                        ProductEntity(
-                            id = id,
-                            name = name,
-                            quantity = quantityInt,
-                            price = priceDouble,
-                            imageUri = current.imageUri
-                        )
-                    )
-                }
-
+                val id = s.editingId
+                if (id == null) repo.addProduct(s.name.trim(), q, pr, s.imageUri)
+                else repo.updateProduct(ProductEntity(id = id, name = s.name.trim(), quantity = q, price = pr, imageUri = s.imageUri))
                 cancelEdit()
-            } catch (e: IllegalArgumentException) {
-                _uiState.update { it.copy(errorMessage = e.message) }
+            } catch (e: Exception) {
+                _ui.update { it.copy(errorMessage = e.message ?: "Error") }
             }
         }
     }
 
-    fun deleteProduct(product: ProductEntity) {
-        viewModelScope.launch {
-            repository.deleteProduct(product)
-        }
+    fun delete(p: ProductEntity) {
+        viewModelScope.launch { repo.deleteProduct(p) }
     }
 }

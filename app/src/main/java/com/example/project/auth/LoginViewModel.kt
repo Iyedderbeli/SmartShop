@@ -21,26 +21,18 @@ class LoginViewModel : ViewModel() {
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
-    fun updateEmail(value: String) {
-        _email.value = value
-    }
-
-    fun updatePassword(value: String) {
-        _password.value = value
-    }
+    fun updateEmail(value: String) { _email.value = value }
+    fun updatePassword(value: String) { _password.value = value }
 
     fun login(onSuccess: () -> Unit) {
         _loading.value = true
         _error.value = null
 
-        auth.signInWithEmailAndPassword(_email.value, _password.value)
+        auth.signInWithEmailAndPassword(_email.value.trim(), _password.value)
             .addOnCompleteListener { task ->
                 _loading.value = false
-                if (task.isSuccessful) {
-                    onSuccess()
-                } else {
-                    _error.value = task.exception?.message ?: "Login failed"
-                }
+                if (task.isSuccessful) onSuccess()
+                else _error.value = task.exception?.message ?: "Login failed"
             }
     }
 }

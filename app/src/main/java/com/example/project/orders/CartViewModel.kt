@@ -14,13 +14,13 @@ import kotlinx.coroutines.launch
 data class CartUiState(
     val items: List<CartItemEntity> = emptyList(),
     val total: Double = 0.0,
-    val error: String? = null
+    val error: String? = null,
+    val checkingOut: Boolean = false
 )
 
 class CartViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo: CartOrderRepository
-
     private val _ui = MutableStateFlow(CartUiState())
     val ui: StateFlow<CartUiState> = _ui
 
@@ -36,30 +36,20 @@ class CartViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addToCart(product: ProductEntity) {
-        viewModelScope.launch { repo.addToCart(product) }
-    }
-
-    fun inc(item: CartItemEntity) {
-        viewModelScope.launch { repo.setCartQuantity(item.productId, item.quantityInCart + 1) }
-    }
-
-    fun dec(item: CartItemEntity) {
-        viewModelScope.launch { repo.setCartQuantity(item.productId, item.quantityInCart - 1) }
-    }
-
-    fun remove(item: CartItemEntity) {
-        viewModelScope.launch { repo.removeFromCart(item.productId) }
-    }
+    fun addToCart(product: ProductEntity) = viewModelScope.launch { repo.addToCart(product) }
+    fun inc(item: CartItemEntity) = viewModelScope.launch { repo.setCartQuantity(item.productId, item.quantityInCart + 1) }
+    fun dec(item: CartItemEntity) = viewModelScope.launch { repo.setCartQuantity(item.productId, item.quantityInCart - 1) }
+    fun remove(item: CartItemEntity) = viewModelScope.launch { repo.removeFromCart(item.productId) }
 
     fun checkout(onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
+                _ui.update { it.copy(checkingOut = true, error = null) }
                 repo.checkout()
-                _ui.update { it.copy(error = null) }
+                _ui.update { it.copy(checkingOut = false) }
                 onSuccess()
             } catch (e: Exception) {
-                _ui.update { it.copy(error = e.message ?: "Checkout failed") }
+                _ui.update { it.copy(checkingOut = false, error = e.message ?: "Checkout failed") }
             }
         }
     }

@@ -12,7 +12,7 @@ import androidx.room.RoomDatabase
         OrderEntity::class,
         OrderItemEntity::class
     ],
-    version = 2, // IMPORTANT: >= 2 because we added tables
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -22,8 +22,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract val orderDao: OrderDao
 
     companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
+        @Volatile private var INSTANCE: AppDatabase? = null
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -32,7 +31,6 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "smartshop.db"
                 )
-                    // ✅ prevents crashes when entities change (perfect for TP)
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }

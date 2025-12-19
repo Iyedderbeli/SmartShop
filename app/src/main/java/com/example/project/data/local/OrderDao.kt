@@ -1,6 +1,8 @@
 package com.example.project.data.local
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -14,4 +16,7 @@ interface OrderDao {
 
     @Query("SELECT * FROM orders ORDER BY createdAtMillis DESC")
     fun observeOrders(): Flow<List<OrderEntity>>
+
+    @Query("SELECT * FROM order_items WHERE orderId = :orderId")
+    fun observeOrderItems(orderId: Int): Flow<List<OrderItemEntity>>
 }
